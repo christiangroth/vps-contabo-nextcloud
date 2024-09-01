@@ -1,0 +1,59 @@
+version: "3"
+
+services:
+  db:
+    image: mariadb:11.5
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    volumes:
+      - "/var/docker/data/nextcloud-db:/var/lib/mysql"
+      - "/etc/timezone:/etc/timezone:ro"
+      - "/etc/localtime:/etc/localtime:ro"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:?please export MYSQL_ROOT_PASSWORD}
+      - MYSQL_USER=nextcloud
+      - MYSQL_PASSWORD=${MYSQL_NEXTCLOUD_PASSWORD:?please export MYSQL_NEXTCLOUD_PASSWORD}
+      - MYSQL_DATABASE=nextcloud
+    networks:
+      - default
+
+  server:
+    image: nextcloud:24.0.5-apache
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.nextcloud.rule=${TRAEFIK_HTTP_ROUTERS_NEXTCLOUD_RULE:?please export TRAEFIK_HTTP_ROUTERS_NEXTCLOUD_RULE}"
+        - "traefik.http.routers.nextcloud.entryPoints=websecure"
+        - "traefik.http.routers.nextcloud.tls=true"
+        - "traefik.http.services.`nextcloud-svc.loadbalancer.server.port=80"
+        - "traefik.docker.network=global_router"
+        - "traefik.http.routers.nextcloud.middlewares=nextcloud-dav"
+        - "traefik.http.middlewares.nextcloud-dav.replacepathregex.regex=^/.well-known/ca(l|rd)dav"
+        - "traefik.http.middlewares.nextcloud-dav.replacepathregex.replacement=/remote.php/dav/"
+    links:
+      - db
+    volumes:
+      - "/var/docker/data/nextcloud-server:/var/www/html"
+      - "/etc/timezone:/etc/timezone:ro"
+      - "/etc/localtime:/etc/localtime:ro"
+    environment:
+      - MYSQL_HOST=db
+      - MYSQL_USER=nextcloud
+      - MYSQL_PASSWORD=${MYSQL_NEXTCLOUD_PASSWORD:?please export MYSQL_NEXTCLOUD_PASSWORD}
+      - MYSQL_DATABASE=nextcloud
+      - NEXTCLOUD_ADMIN_USER=${NEXTCLOUD_ADMIN_USER:?please export NEXTCLOUD_ADMIN_USER}
+      - NEXTCLOUD_ADMIN_PASSWORD=${NEXTCLOUD_ADMIN_PASSWORD:?please export NEXTCLOUD_ADMIN_PASSWORD}
+    networks:
+      - default
+      - global_router
+
+networks:
+  global_router:
+    external: true
+  default:
+    external: false
