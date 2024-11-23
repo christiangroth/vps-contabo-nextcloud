@@ -2,7 +2,7 @@ version: "3"
 
 services:
   db:
-    image: mariadb:11.5
+    image: mariadb:11.6
     deploy:
       replicas: 1
       restart_policy:
