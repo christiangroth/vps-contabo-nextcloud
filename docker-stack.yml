@@ -30,7 +30,7 @@ services:
         - "traefik.http.routers.nextcloud.rule=${TRAEFIK_HTTP_ROUTERS_NEXTCLOUD_RULE:?please export TRAEFIK_HTTP_ROUTERS_NEXTCLOUD_RULE}"
         - "traefik.http.routers.nextcloud.entryPoints=websecure"
         - "traefik.http.routers.nextcloud.tls=true"
-        - "traefik.http.services.`nextcloud-svc.loadbalancer.server.port=80"
+        - "traefik.http.services.nextcloud-svc.loadbalancer.server.port=80"
         - "traefik.swarm.network=global_router"
         - "traefik.http.routers.nextcloud.middlewares=nextcloud-dav"
         - "traefik.http.middlewares.nextcloud-dav.replacepathregex.regex=^/.well-known/ca(l|rd)dav"
